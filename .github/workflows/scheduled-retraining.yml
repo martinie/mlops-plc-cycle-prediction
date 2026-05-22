@@ -1,0 +1,41 @@
+name: Scheduled Monitoring and Retraining
+
+on:
+  schedule:
+    - cron: "0 2 * * 1"
+  workflow_dispatch:
+
+jobs:
+  monitor-and-retrain:
+    name: Monitor data drift and retrain model
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run preprocessing
+        run: python -m src.preprocess
+
+      - name: Run monitoring check
+        run: python -m src.monitor
+
+      - name: Retrain model
+        run: python -m src.train
+
+      - name: Upload retraining artefacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: scheduled-retraining-artefacts
+          path: |
+            models/
+            reports/
+            mlruns/
