@@ -1,0 +1,70 @@
+name: Train Model and Upload Artefacts
+
+on:
+  push:
+    branches:
+      - dev
+    paths:
+      - "src/**"
+      - "data/raw/**"
+      - "requirements.txt"
+      - ".github/workflows/train-and-artifacts.yml"
+
+  workflow_dispatch:
+
+jobs:
+  train-and-upload:
+    name: Train models, log MLflow runs, and upload artefacts
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run preprocessing
+        run: python -m src.preprocess
+
+      - name: Train and register model with MLflow
+        run: python -m src.train
+
+      - name: Show generated artefacts
+        run: |
+          echo "Models:"
+          ls -lh models || true
+          echo "Reports:"
+          ls -lh reports || true
+          echo "MLflow runs:"
+          ls -lh mlruns || true
+
+      - name: Upload trained model artefact
+        uses: actions/upload-artifact@v4
+        with:
+          name: trained-model
+          path: models/selected_model.joblib
+          retention-days: 30
+
+      - name: Upload report artefacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: model-reports
+          path: |
+            reports/metrics.json
+            reports/model_comparison.csv
+          retention-days: 30
+
+      - name: Upload MLflow tracking artefacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: mlflow-runs
+          path: mlruns/
+          retention-days: 30
