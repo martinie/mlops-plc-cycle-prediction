@@ -1,0 +1,52 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: mlops-plc
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: plc-cycle-api
+  namespace: mlops-plc
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: plc-cycle-api
+  template:
+    metadata:
+      labels:
+        app: plc-cycle-api
+    spec:
+      containers:
+        - name: plc-cycle-api
+          image: ghcr.io/martinie/mlops-plc-cycle-api:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8000
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 20
+            periodSeconds: 20
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: plc-cycle-api-service
+  namespace: mlops-plc
+spec:
+  selector:
+    app: plc-cycle-api
+  ports:
+    - protocol: TCP
+      port: 8000
+      targetPort: 8000
+  type: ClusterIP
