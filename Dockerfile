@@ -23,4 +23,4 @@ RUN python -m src.train
 
 EXPOSE 8080
 
-CMD ["gunicorn", "--bind", "0.0.0.0:8080", "app.main:app"]
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "app.main:app"]
