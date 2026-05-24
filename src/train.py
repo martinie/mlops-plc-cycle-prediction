@@ -13,6 +13,7 @@ from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_sc
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
+from mlflow.models import infer_signature
 
 
 DATA_PATH = Path("data/processed/cycle_features.csv")
@@ -160,10 +161,16 @@ def train() -> None:
             for metric_name, metric_value in metrics.items():
                 mlflow.log_metric(metric_name, metric_value)
 
+            signature_input = X_train.head(5)
+            signature_output = model.predict(signature_input)
+            signature = infer_signature(signature_input, signature_output)
+
             mlflow.sklearn.log_model(
                 sk_model=model,
                 artifact_path="model",
                 registered_model_name="plc_cycle_anomaly_classifier",
+                signature=signature,
+                input_example=X_train.head(1),
             )
 
             result_row = {"model_name": model_name}
